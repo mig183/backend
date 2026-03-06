@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Para ti 💜</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700;900&family=Sacramento&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1: #000000; /* negro */
+      --accent1: #c084fc; /* lila */
+      --accent2: #9333ea; /* violeta fuerte */
+      --glass: rgba(255,255,255,0.08);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:Montserrat,system-ui,Arial;background:linear-gradient(160deg,var(--bg1) 0%, #1a0b2e 80%);color:#f5f3ff;overflow:hidden}
+
+    .wrap{height:100%;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .card{width:min(900px,95%);display:grid;grid-template-columns:380px 1fr;gap:2rem;padding:2rem;border-radius:20px;background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));box-shadow:0 10px 35px rgba(0,0,0,0.7);position:relative;overflow:hidden;z-index:2}
+
+    .photoWrap{width:320px;height:420px;border-radius:16px;overflow:hidden;position:relative;background:linear-gradient(135deg,var(--accent1),var(--accent2));padding:6px;box-shadow:0 0 25px rgba(192,132,252,0.5)}
+    .photo{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block}
+    .badge{position:absolute;left:16px;top:16px;background:rgba(0,0,0,0.4);backdrop-filter:blur(6px);padding:6px 12px;border-radius:999px;font-weight:600;font-size:14px;color:#fff}
+
+    h1{margin:0;font-size:2.4rem;color:white;letter-spacing:-1px}
+    .subtitle{color:rgba(244,234,255,0.7);margin-top:6px;font-size:1rem}
+
+    .message{margin-top:12px;background:var(--glass);padding:1.2rem;border-radius:14px;min-height:150px;display:flex;align-items:center;box-shadow:0 4px 15px rgba(192,132,252,0.15)}
+    .typing{font-size:1.1rem;line-height:1.6;color:#faf5ff;white-space:pre-line}
+    .cursor{display:inline-block;width:2px;height:1rem;background:var(--accent1);margin-left:6px;animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:0}}
+
+    .btn{padding:10px 16px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#0a0114;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(147,51,234,0.3);transition:transform .2s}
+    .btn:hover{transform:scale(1.05)}
+    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.1);color:#f4eaff}
+
+    .controls{display:flex;gap:12px;margin-top:10px}
+
+    .blob{position:absolute;border-radius:50%;filter:blur(40px);opacity:0.45;z-index:1}
+    .blob.one{width:380px;height:380px;right:-80px;top:-100px;background:linear-gradient(180deg,var(--accent2),#a855f7);animation:float1 12s ease-in-out infinite}
+    .blob.two{width:280px;height:280px;left:-100px;bottom:-80px;background:linear-gradient(180deg,var(--accent1),#d8b4fe);animation:float2 14s ease-in-out infinite}
+
+    @keyframes float1{0%,100%{transform:translateY(0)}50%{transform:translateY(40px)}}
+    @keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
+
+    /* corazones flotantes */
+    .heart{position:fixed;font-size:22px;color:var(--accent1);pointer-events:none;animation:rise 4s linear forwards}
+    @keyframes rise{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-150px) scale(1.8)}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="blob one"></div>
+      <div class="blob two"></div>
+
+      <div class="left">
+        <div class="photoWrap">
+          <img class="photo" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=800&auto=format&fit=crop" alt="Foto especial">
+          <div class="badge">Para: Mi amor 💜</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <h1>Hola, mi amor ✨</h1>
+        <div class="subtitle">Una sorpresa hecha con todo mi cariño</div>
+
+        <div class="message">
+          <div class="typing" id="typingText"></div><div class="cursor" id="cursor"></div>
+        </div>
+
+        <div class="controls">
+          <button class="btn" id="revealBtn">Mostrar mensaje completo</button>
+          <button class="btn ghost" id="heartsBtn">💜 Lluvia de corazones</button>
+          <button class="btn" id="musicBtn">🎶 Música</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="bgAudio" loop src="https://www2.cs.uic.edu/~i101/SoundFiles/StarWars60.wav"></audio>
+
+  <script>
+    const MESSAGE = [
+      "Desde que llegaste, mi mundo tiene más color.",
+      "El lila del cielo me recuerda a ti, siempre brillante y único.",
+      "Gracias por ser mi razón de sonreír cada día.",
+      "Te amo más de lo que estas palabras pueden decir. 💜"
+    ];
+
+    const typingText = document.getElementById('typingText');
+    const cursor = document.getElementById('cursor');
+    let sIndex = 0, cIndex = 0, forward = true, paused = false;
+
+    function typeLoop(){
+      if(paused) return;
+      const current = MESSAGE[sIndex];
+      if(forward){
+        typingText.textContent = current.slice(0, cIndex+1);
+        cIndex++;
+        if(cIndex === current.length){
+          forward = false;
+          setTimeout(typeLoop, 1000);
+          return;
+        }
+      } else {
+        typingText.textContent = current.slice(0, cIndex-1);
+        cIndex--;
+        if(cIndex === 0){
+          forward = true;
+          sIndex = (sIndex+1) % MESSAGE.length;
+        }
+      }
+      setTimeout(typeLoop, 60 + Math.random()*40);
+    }
+    typeLoop();
+
+    document.getElementById('revealBtn').addEventListener('click', ()=>{
+      paused = true;
+      typingText.textContent = MESSAGE.join('\n\n');
+      cursor.style.display = 'none';
+    });
+
+    // Música
+    const musicBtn = document.getElementById('musicBtn');
+    const audio = document.getElementById('bgAudio');
+    let playing = false;
+    musicBtn.addEventListener('click', ()=>{
+      if(!playing){audio.play();musicBtn.textContent='⏸️ Pausar';playing=true}
+      else{audio.pause();musicBtn.textContent='🎶 Música';playing=false}
+    });
+
+    // Corazones flotantes
+    document.getElementById('heartsBtn').addEventListener('click', ()=>{
+      for(let i=0;i<20;i++){
+        setTimeout(()=>{
+          const heart=document.createElement('div');
+          heart.className='heart';
+          heart.style.left=Math.random()*window.innerWidth+'px';
+          heart.style.top=window.innerHeight+'px';
+          heart.textContent='💜';
+          document.body.appendChild(heart);
+          setTimeout(()=>heart.remove(),4000);
+        },i*200);
+      }
+    });
+  </script>
+</body>
+</html>
